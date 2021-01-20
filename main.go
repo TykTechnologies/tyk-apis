@@ -29,6 +29,10 @@ func init() {
 	if err := registry.Register(genMarker); err != nil {
 		panic(err)
 	}
+	ruleMarker := markers.Must(markers.MakeDefinition("output:dir", markers.DescribesPackage, genall.OutputToDirectory("config")))
+	if err := registry.Register(ruleMarker); err != nil {
+		panic(err)
+	}
 	if err := genall.RegisterOptionsMarkers(registry); err != nil {
 		panic(err)
 	}
@@ -40,8 +44,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	runtime.OutputRules.Default = genall.OutputArtifacts{}
-
 	if hadErrs := runtime.Run(); hadErrs {
 		fmt.Fprintln(os.Stderr, "not entirely successful")
 		os.Exit(1)
