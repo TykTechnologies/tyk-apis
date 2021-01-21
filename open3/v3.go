@@ -34,8 +34,8 @@ func init() {
 	)
 }
 
-func IsModel(m markers.MarkerValues, info *markers.TypeInfo) bool {
-	return m.Get("o:model") == nil
+func IsModel(info *markers.TypeInfo) bool {
+	return info.Markers.Get("o:model") != nil
 }
 
 var marks = []string{

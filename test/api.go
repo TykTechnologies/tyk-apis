@@ -338,6 +338,7 @@ type OpenIDOptions struct {
 
 // APIDefinition represents the configuration for a single proxied API and it's versions.
 // +kubebuilder:object:generate=true
+//+o:model
 type APIDefinitionSpec struct {
 
 	// For server use only, do not use

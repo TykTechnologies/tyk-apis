@@ -7,8 +7,10 @@ import (
 
 	"github.com/TykTechnologies/tyk-apis/open3"
 	"github.com/getkin/kin-openapi/openapi3"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
+	"sigs.k8s.io/yaml"
 
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -86,7 +88,13 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 
 	for _, root := range ctx.Roots {
 		markers.EachType(ctx.Collector, root, func(info *markers.TypeInfo) {
-
+			if !open3.IsModel(info) {
+				return
+			}
+			parser.NeedFlattenedSchemaFor(crd.TypeIdent{
+				Package: root,
+				Name:    info.Name,
+			})
 		})
 	}
 
@@ -98,9 +106,40 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		}
 	}
 	// add components
+	swagg.Components.Schemas = make(openapi3.Schemas)
+	for k, v := range parser.FlattenedSchemata {
+		s, err := convertScehma(v.DeepCopy())
+		if err != nil {
+			return err
+		}
+		swagg.Components.Schemas[k.Name] = openapi3.NewSchemaRef(
+			"", s,
+		)
+	}
 	return writeJSON(ctx, "schema.json", swagg)
 }
 
+func convertScehma(src *v1.JSONSchemaProps) (*openapi3.Schema, error) {
+	b, err := yaml.Marshal(src)
+	if err != nil {
+		return nil, err
+	}
+	o := map[string]interface{}{}
+	err = yaml.Unmarshal(b, &o)
+	if err != nil {
+		return nil, err
+	}
+	x, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	s := openapi3.NewSchema()
+	err = s.UnmarshalJSON(x)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
 func writeJSON(g *genall.GenerationContext, itemPath string, object *openapi3.Swagger) error {
 	out, err := g.Open(nil, itemPath)
 	if err != nil {
