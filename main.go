@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/TykTechnologies/tyk-apis/open3"
+	"github.com/getkin/kin-openapi/openapi3"
 	"sigs.k8s.io/controller-tools/pkg/crd"
 	"sigs.k8s.io/controller-tools/pkg/loader"
-	"sigs.k8s.io/yaml"
 
 	"sigs.k8s.io/controller-tools/pkg/genall"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -38,6 +37,8 @@ func init() {
 	}
 }
 
+//go:generate go run convert/main.go convert  paths=./open3/
+
 func main() {
 	runtime, err := genall.FromOptions(registry, os.Args[1:])
 	if err != nil {
@@ -65,6 +66,12 @@ func (g Generator) CheckFilter() loader.NodeFilter {
 }
 
 func (g Generator) RegisterMarkers(into *markers.Registry) error {
+	for _, m := range open3.All {
+		err := into.Register(m)
+		if err != nil {
+			return err
+		}
+	}
 	return g.c().RegisterMarkers(into)
 }
 func (g Generator) Generate(ctx *genall.GenerationContext) error {
@@ -76,37 +83,31 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 	for _, root := range ctx.Roots {
 		parser.NeedPackage(root)
 	}
-	for k := range parser.Types {
-		for _, x := range g.Targets {
-			name := strings.ToLower(k.Name)
-			if name == strings.ToLower(x) {
-				parser.NeedFlattenedSchemaFor(k)
-				fullSchema := parser.FlattenedSchemata[k]
-				schema := fullSchema.DeepCopy()
-				schema.ID = id
-				schema.Schema = scheme
-				writeJSON(ctx, name+".json",
-					schema)
-			}
+
+	for _, root := range ctx.Roots {
+		markers.EachType(ctx.Collector, root, func(info *markers.TypeInfo) {
+
+		})
+	}
+
+	swagg := &openapi3.Swagger{}
+	for _, root := range ctx.Roots {
+		err := open3.Load(swagg, ctx.Collector, root)
+		if err != nil {
+			return err
 		}
 	}
-	return nil
+	// add components
+	return writeJSON(ctx, "schema.json", swagg)
 }
 
-func writeJSON(g *genall.GenerationContext, itemPath string, object proto.Message) error {
+func writeJSON(g *genall.GenerationContext, itemPath string, object *openapi3.Swagger) error {
 	out, err := g.Open(nil, itemPath)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
-	b, err := yaml.Marshal(object)
-	if err != nil {
-		return err
-	}
-	o := map[string]interface{}{}
-	err = yaml.Unmarshal(b, &o)
 	e := json.NewEncoder(out)
 	e.SetIndent("", "  ")
 	return e.Encode(object)
-
 }

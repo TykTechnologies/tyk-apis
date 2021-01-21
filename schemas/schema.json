@@ -1,0 +1,12 @@
+{
+  "components": {},
+  "info": {
+    "license": {
+      "name": "MIT"
+    },
+    "title": "Tyk GW",
+    "version": "v3.0.4"
+  },
+  "openapi": "",
+  "paths": null
+}
