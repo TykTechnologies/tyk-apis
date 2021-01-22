@@ -56,9 +56,7 @@ func main() {
 var _ genall.Generator = Generator{}
 
 // Generator generates api spec.
-type Generator struct {
-	Targets []string `json:"" marker:""`
-}
+type Generator struct{}
 
 func (g Generator) c() crd.Generator {
 	return crd.Generator{}
