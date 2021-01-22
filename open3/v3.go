@@ -34,6 +34,9 @@ func init() {
 		markers.Must(
 			markers.MakeDefinition("o:security", markers.DescribesPackage, openapi3.SecurityRequirement{}),
 		),
+		markers.Must(
+			markers.MakeDefinition("o:tags", markers.DescribesPackage, Tag{}),
+		),
 	)
 }
 
@@ -44,6 +47,7 @@ func IsModel(info *markers.TypeInfo) bool {
 var marks = []string{
 	"o:title", "o:description", "o:termsOfService", "o:contact", "o:license", "o:version", //info
 	"o:security", //security
+	"o:tags",
 }
 
 func Load(swagg *openapi3.Swagger, coll *markers.Collector, pkg *loader.Package) error {
@@ -61,6 +65,11 @@ func Load(swagg *openapi3.Swagger, coll *markers.Collector, pkg *loader.Package)
 			for _, x := range m[v] {
 				s := x.(openapi3.SecurityRequirement)
 				swagg.Security = append(swagg.Security, s)
+			}
+		case "o:tags":
+			for _, x := range m[v] {
+				s := x.(Tag)
+				swagg.Tags = append(swagg.Tags, s.Convert())
 			}
 		}
 	}
