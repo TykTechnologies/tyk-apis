@@ -2,9 +2,9 @@ package open3
 
 //+o:convert
 type Contact struct {
-	Name  string `marker:",optional" json:"name,omitempty" yaml:"name,omitempty"`
-	URL   string `marker:"url,optional" json:"url,omitempty" yaml:"url,omitempty"`
-	Email string `marker:",optional" json:"email,omitempty" yaml:"email,omitempty"`
+	Name  string `marker:",optional" json:"name,omitempty"`
+	URL   string `marker:"url,optional" json:"url,omitempty"`
+	Email string `marker:",optional" json:"email,omitempty"`
 }
 
 //+o:convert

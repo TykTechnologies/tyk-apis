@@ -1887,5 +1887,19 @@
     "version": "v3.0.4"
   },
   "openapi": "",
-  "paths": null
+  "paths": null,
+  "security": [
+    {
+      "Oauth2": [
+        "scope2",
+        "scope1"
+      ]
+    },
+    {
+      "openid": [
+        "scopea",
+        "scopeb"
+      ]
+    }
+  ]
 }
